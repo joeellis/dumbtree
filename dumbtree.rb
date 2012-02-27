@@ -1,7 +1,7 @@
 module DumbTree
   class TransparentRedirect
-    def self.create_customer_hash(user, plan)
-      hash = { :customer => { :email => user.email, :custom_fields => { :plan => plan.name } } }
+    def self.create_customer_hash(user)
+      hash = { :customer => { :email => user.email } }
       if (Rails.env.development? || Rails.env.test?)
         hash.merge!(:redirect_url  => "http://localhost:3000/receive")
       else
@@ -35,10 +35,6 @@ module DumbTree
 
     def newest_credit_card
       customer.credit_cards.sort_by {|cc| cc.updated_at}.last
-    end
-
-    def custom_fields
-      customer.custom_fields
     end
 
     def plan

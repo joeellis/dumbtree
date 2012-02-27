@@ -1,12 +1,20 @@
+require "#{File.dirname(__FILE__)}/../dumbtree"
+require 'date'
+
 module Braintree
   module TransparentRedirect
+  end
+
+  class Customer
+  end
+
+  class Subscription
   end
 end
 
 describe DumbTree::TransparentRedirect do
   let(:query_string) { stub }
   let(:bt_confirmation) { stub(:success? => true) }
-  let(:custom_fields) { {:email => "joe@example.com", :plan => "yearly"} }
 
   context "when handling transactions for Braintree" do
     before(:each) { Braintree::TransparentRedirect.stub(:confirm).with(query_string).and_return(bt_confirmation) }
@@ -29,17 +37,6 @@ describe DumbTree::TransparentRedirect do
       subject.newest_credit_card.updated_at.should == jan_3
     end
 
-    it "can figure out a plan from the confirmation result" do
-      bt_confirmation.stub_chain :customer, :custom_fields => custom_fields
-      Plan.should_receive(:new).with("yearly")
-      subject.plan
-    end
-
-    it "can parse custom fields" do
-      bt_confirmation.stub_chain :customer, :custom_fields => custom_fields
-      subject.custom_fields.should == custom_fields
-    end
-
     it "can get the credit card's token" do
       bt_confirmation.stub_chain :customer, :credit_cards => [stub(:token => "abcdefg", :updated_at => Time.now)]
       subject.token.should == "abcdefg"
@@ -58,11 +55,10 @@ describe DumbTree::TransparentRedirect do
 
   context "when generating data for forms" do
     it "can generate a tr_data hash for creating a Braintree customer" do
-      plan = Plan.new "Whatever"
       user = stub :email => "joe@example.com"
-      hash = { :customer => { :email => user.email, :custom_fields => { :plan => plan.name } }, :redirect_url => "http://localhost:5000/receive" }
+      hash = { :customer => { :email => user.email }, :redirect_url => "http://localhost:5000/receive" }
       Braintree::TransparentRedirect.should_receive(:create_customer_data).with(hash)
-      DumbTree::TransparentRedirect.create_customer_hash user, plan
+      DumbTree::TransparentRedirect.create_customer_hash user
     end
   end
 end
